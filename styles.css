@@ -196,7 +196,6 @@ h2 {
 .grave-detail,
 .burial-form,
 .resurrection-panel,
-.waitlist-band,
 .share-card {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
@@ -302,42 +301,6 @@ h2 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
-}
-
-.waitlist-band {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.75fr);
-  gap: 24px;
-  align-items: center;
-  margin-top: 26px;
-  border-radius: 8px;
-  padding: clamp(22px, 4vw, 36px);
-}
-
-.waitlist-band p {
-  max-width: 640px;
-  color: var(--muted);
-  line-height: 1.6;
-}
-
-.waitlist-form {
-  display: grid;
-  gap: 10px;
-}
-
-#waitlist-message {
-  min-height: 22px;
-  color: var(--accent);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-#waitlist-message[data-type="pending"] {
-  color: var(--muted);
-}
-
-#waitlist-message[data-type="error"] {
-  color: var(--danger);
 }
 
 .tombstone-card {
@@ -562,8 +525,7 @@ textarea {
   }
 
   .idea-grid,
-  .stats,
-  .waitlist-band {
+  .stats {
     grid-template-columns: 1fr;
   }
 

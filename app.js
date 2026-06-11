@@ -308,7 +308,6 @@ const seedIdeas = [
 ];
 
 const storageKey = "dead-projects-club:v2";
-const waitlistKey = "dead-projects-club:waitlist:v1";
 const supabaseConfig = window.DEAD_PROJECTS_SUPABASE || {};
 const supabasePublicKey = supabaseConfig.publishableKey || supabaseConfig.anonKey;
 const supabaseUrl = supabaseConfig.url?.replace(/\/$/, "");
@@ -317,7 +316,6 @@ const supabaseClient =
     ? window.supabase.createClient(supabaseUrl, supabasePublicKey)
     : null;
 const ideasTable = supabaseConfig.ideasTable || "dead_projects";
-const waitlistTable = supabaseConfig.waitlistTable || "waitlist";
 let activeSort = "latest";
 
 function readLocalIdeas() {
@@ -417,44 +415,6 @@ async function saveIdea(idea) {
   if (error) throw error;
 }
 
-async function saveWaitlistEntry(contact) {
-  const entry = { contact, createdAt: new Date().toISOString() };
-
-  if (!supabaseClient) {
-    const entries = getWaitlist();
-    entries.unshift(entry);
-    localStorage.setItem(waitlistKey, JSON.stringify(entries));
-    return;
-  }
-
-  const response = await fetch(`${supabaseUrl}/rest/v1/${waitlistTable}`, {
-    method: "POST",
-    headers: {
-      apikey: supabasePublicKey,
-      Authorization: `Bearer ${supabasePublicKey}`,
-      "Content-Type": "application/json",
-      Prefer: "return=minimal",
-    },
-    body: JSON.stringify({
-      contact,
-      created_at: entry.createdAt,
-    }),
-  });
-
-  if (response.ok) return;
-
-  const errorText = await response.text();
-  throw new Error(errorText || `Waitlist request failed with ${response.status}`);
-}
-
-function setWaitlistMessage(message, type = "success") {
-  const messageEl = document.getElementById("waitlist-message");
-  if (!messageEl) return;
-
-  messageEl.textContent = message;
-  messageEl.dataset.type = type;
-}
-
 function slugify(value) {
   return value
     .toLowerCase()
@@ -490,17 +450,6 @@ function formatDate(dateValue) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(dateValue));
-}
-
-function getWaitlist() {
-  const stored = localStorage.getItem(waitlistKey);
-  if (!stored) return [];
-
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
 }
 
 function makeShareText(idea) {
@@ -549,12 +498,6 @@ async function route() {
     return;
   }
 
-  if (hash === "#/waitlist") {
-    await renderHome();
-    document.getElementById("waitlist")?.scrollIntoView();
-    return;
-  }
-
   if (hash.startsWith("#/idea/")) {
     await renderDetail(decodeURIComponent(hash.replace("#/idea/", "")));
     return;
@@ -600,30 +543,6 @@ async function renderHome() {
       });
       renderIdeaGrid();
     });
-  });
-
-  document.getElementById("waitlist-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const formEl = event.currentTarget;
-    const submitButton = formEl.querySelector("button[type='submit']");
-    const form = new FormData(formEl);
-    const contact = form.get("contact").trim();
-
-    submitButton.disabled = true;
-    submitButton.textContent = "Joining...";
-    setWaitlistMessage("Saving your spot...", "pending");
-
-    try {
-      await saveWaitlistEntry(contact);
-      formEl.reset();
-      setWaitlistMessage("Saved. See you at launch.", "success");
-    } catch (error) {
-      console.error("Waitlist save failed.", error);
-      setWaitlistMessage("Could not save that yet. Please try again.", "error");
-    } finally {
-      submitButton.disabled = false;
-      submitButton.textContent = "Join waitlist";
-    }
   });
 
   await renderIdeaGrid();
