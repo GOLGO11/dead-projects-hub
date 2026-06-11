@@ -11,6 +11,13 @@ is configured, and falls back to `localStorage` for local preview.
 
 Fill in `supabase-config.js`, then add this schema in Supabase:
 
+```js
+window.DEAD_PROJECTS_SUPABASE = {
+  url: "https://your-project.supabase.co",
+  publishableKey: "sb_publishable_your-public-key",
+};
+```
+
 ```sql
 create table if not exists dead_projects (
   id text primary key,

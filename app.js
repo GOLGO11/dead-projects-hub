@@ -310,9 +310,10 @@ const seedIdeas = [
 const storageKey = "dead-projects-club:v2";
 const waitlistKey = "dead-projects-club:waitlist:v1";
 const supabaseConfig = window.DEAD_PROJECTS_SUPABASE || {};
+const supabasePublicKey = supabaseConfig.publishableKey || supabaseConfig.anonKey;
 const supabaseClient =
-  supabaseConfig.url && supabaseConfig.anonKey && window.supabase
-    ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
+  supabaseConfig.url && supabasePublicKey && window.supabase
+    ? window.supabase.createClient(supabaseConfig.url, supabasePublicKey)
     : null;
 const ideasTable = supabaseConfig.ideasTable || "dead_projects";
 const waitlistTable = supabaseConfig.waitlistTable || "waitlist";
