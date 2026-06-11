@@ -199,7 +199,7 @@ h2 {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: end;
+  justify-content: center;
   overflow: hidden;
   min-height: 440px;
   padding: 30px;
@@ -352,12 +352,20 @@ h2 {
   margin-top: 22px;
 }
 
-.form-shell,
-.detail-shell {
+.form-shell {
   display: grid;
   grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.25fr);
   gap: 28px;
   align-items: start;
+}
+
+.detail-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.78fr);
+  gap: 24px;
+  align-items: start;
+  max-width: 1040px;
+  margin: 0 auto;
 }
 
 .form-intro {
@@ -432,7 +440,7 @@ textarea {
 
 .grave-detail {
   border-radius: 8px 8px 58px 58px;
-  padding: clamp(24px, 5vw, 54px);
+  padding: clamp(24px, 4vw, 44px);
 }
 
 .share-card {
@@ -447,7 +455,7 @@ textarea {
 .share-card h2 {
   margin: 8px 0 14px;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(30px, 5vw, 52px);
+  font-size: clamp(28px, 4vw, 46px);
 }
 
 .share-card p {
@@ -459,7 +467,7 @@ textarea {
 .grave-detail h1 {
   margin-bottom: 12px;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(44px, 7vw, 78px);
+  font-size: clamp(40px, 5vw, 64px);
 }
 
 .detail-kicker {

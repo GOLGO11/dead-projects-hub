@@ -309,9 +309,16 @@ const seedIdeas = [
 
 const storageKey = "dead-projects-club:v2";
 const waitlistKey = "dead-projects-club:waitlist:v1";
+const supabaseConfig = window.DEAD_PROJECTS_SUPABASE || {};
+const supabaseClient =
+  supabaseConfig.url && supabaseConfig.anonKey && window.supabase
+    ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
+    : null;
+const ideasTable = supabaseConfig.ideasTable || "dead_projects";
+const waitlistTable = supabaseConfig.waitlistTable || "waitlist";
 let activeSort = "latest";
 
-function getIdeas() {
+function readLocalIdeas() {
   const stored = localStorage.getItem(storageKey);
   if (!stored) {
     localStorage.setItem(storageKey, JSON.stringify(seedIdeas));
@@ -326,8 +333,104 @@ function getIdeas() {
   }
 }
 
-function saveIdeas(ideas) {
+function saveLocalIdeas(ideas) {
   localStorage.setItem(storageKey, JSON.stringify(ideas));
+}
+
+function toDbIdea(idea) {
+  return {
+    id: idea.id,
+    title: idea.title,
+    description: idea.description,
+    epitaph: idea.epitaph,
+    death_reason: idea.deathReason,
+    stage: idea.stage,
+    last_words: idea.lastWords,
+    project_url: idea.projectUrl || "",
+    allow_resurrection: idea.allowResurrection,
+    flowers: idea.flowers,
+    created_at: idea.createdAt,
+    resurrections: idea.resurrections || [],
+  };
+}
+
+function fromDbIdea(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    epitaph: row.epitaph,
+    deathReason: row.death_reason,
+    stage: row.stage,
+    lastWords: row.last_words,
+    projectUrl: row.project_url || "",
+    allowResurrection: row.allow_resurrection,
+    flowers: row.flowers || 0,
+    createdAt: row.created_at,
+    resurrections: row.resurrections || [],
+  };
+}
+
+async function getIdeas() {
+  if (!supabaseClient) return readLocalIdeas();
+
+  const { data, error } = await supabaseClient
+    .from(ideasTable)
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.warn("Supabase read failed, using local fallback.", error);
+    return readLocalIdeas();
+  }
+
+  if (data.length) return data.map(fromDbIdea);
+
+  const { error: seedError } = await supabaseClient
+    .from(ideasTable)
+    .upsert(seedIdeas.map(toDbIdea), { onConflict: "id" });
+
+  if (seedError) {
+    console.warn("Supabase seed failed, using local fallback.", seedError);
+    return readLocalIdeas();
+  }
+
+  return seedIdeas;
+}
+
+async function saveIdea(idea) {
+  if (!supabaseClient) {
+    const ideas = readLocalIdeas();
+    const nextIdeas = ideas.some((item) => item.id === idea.id)
+      ? ideas.map((item) => (item.id === idea.id ? idea : item))
+      : [idea, ...ideas];
+    saveLocalIdeas(nextIdeas);
+    return;
+  }
+
+  const { error } = await supabaseClient.from(ideasTable).upsert(toDbIdea(idea), {
+    onConflict: "id",
+  });
+
+  if (error) throw error;
+}
+
+async function saveWaitlistEntry(contact) {
+  const entry = { contact, createdAt: new Date().toISOString() };
+
+  if (!supabaseClient) {
+    const entries = getWaitlist();
+    entries.unshift(entry);
+    localStorage.setItem(waitlistKey, JSON.stringify(entries));
+    return;
+  }
+
+  const { error } = await supabaseClient.from(waitlistTable).insert({
+    contact,
+    created_at: entry.createdAt,
+  });
+
+  if (error) throw error;
 }
 
 function slugify(value) {
@@ -412,10 +515,10 @@ async function copyText(text, button, successLabel) {
   }, 1800);
 }
 
-function route() {
+async function route() {
   const hash = window.location.hash || "#/";
   if (hash === "#/" || hash === "#") {
-    renderHome();
+    await renderHome();
     return;
   }
 
@@ -425,13 +528,13 @@ function route() {
   }
 
   if (hash === "#/waitlist") {
-    renderHome();
+    await renderHome();
     document.getElementById("waitlist")?.scrollIntoView();
     return;
   }
 
   if (hash.startsWith("#/idea/")) {
-    renderDetail(decodeURIComponent(hash.replace("#/idea/", "")));
+    await renderDetail(decodeURIComponent(hash.replace("#/idea/", "")));
     return;
   }
 
@@ -443,12 +546,12 @@ function cloneTemplate(id) {
   return template.content.cloneNode(true);
 }
 
-function renderHome() {
+async function renderHome() {
   const app = document.getElementById("app");
   app.innerHTML = "";
   app.appendChild(cloneTemplate("home-template"));
 
-  const ideas = getIdeas();
+  const ideas = await getIdeas();
   const featured = [...ideas].sort((a, b) => b.flowers - a.flowers)[0];
   const totalFlowers = ideas.reduce((sum, idea) => sum + idea.flowers, 0);
   const totalResurrections = ideas.reduce((sum, idea) => sum + idea.resurrections.length, 0);
@@ -477,23 +580,21 @@ function renderHome() {
     });
   });
 
-  document.getElementById("waitlist-form").addEventListener("submit", (event) => {
+  document.getElementById("waitlist-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const contact = form.get("contact").trim();
-    const entries = getWaitlist();
-    entries.unshift({ contact, createdAt: new Date().toISOString() });
-    localStorage.setItem(waitlistKey, JSON.stringify(entries));
+    await saveWaitlistEntry(contact);
     event.currentTarget.reset();
     document.getElementById("waitlist-message").textContent = "Saved. See you at launch.";
   });
 
-  renderIdeaGrid();
+  await renderIdeaGrid();
 }
 
-function renderIdeaGrid() {
+async function renderIdeaGrid() {
   const grid = document.getElementById("idea-grid");
-  const ideas = [...getIdeas()];
+  const ideas = [...(await getIdeas())];
 
   ideas.sort((a, b) => {
     if (activeSort === "flowers") return b.flowers - a.flowers;
@@ -531,10 +632,10 @@ function renderBury() {
     .map((reason) => `<option>${escapeHtml(reason)}</option>`)
     .join("");
 
-  document.getElementById("bury-form").addEventListener("submit", (event) => {
+  document.getElementById("bury-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const ideas = getIdeas();
+    const ideas = await getIdeas();
     const title = form.get("title").trim();
     const idea = {
       id: uniqueSlug(title, ideas),
@@ -551,13 +652,13 @@ function renderBury() {
       resurrections: [],
     };
 
-    saveIdeas([idea, ...ideas]);
+    await saveIdea(idea);
     window.location.hash = `#/idea/${encodeURIComponent(idea.id)}`;
   });
 }
 
-function renderDetail(id) {
-  const idea = getIdeas().find((item) => item.id === id);
+async function renderDetail(id) {
+  const idea = (await getIdeas()).find((item) => item.id === id);
   if (!idea) {
     renderNotFound();
     return;
@@ -641,12 +742,12 @@ function renderDetail(id) {
     </aside>
   `;
 
-  document.getElementById("flower-button").addEventListener("click", () => {
-    const ideas = getIdeas();
+  document.getElementById("flower-button").addEventListener("click", async () => {
+    const ideas = await getIdeas();
     const target = ideas.find((item) => item.id === id);
     target.flowers += 1;
-    saveIdeas(ideas);
-    renderDetail(id);
+    await saveIdea(target);
+    await renderDetail(id);
   });
 
   document.getElementById("copy-post-button").addEventListener("click", (event) => {
@@ -657,10 +758,10 @@ function renderDetail(id) {
     copyText(window.location.href, event.currentTarget, "Copied link");
   });
 
-  document.getElementById("resurrection-form")?.addEventListener("submit", (event) => {
+  document.getElementById("resurrection-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const ideas = getIdeas();
+    const ideas = await getIdeas();
     const target = ideas.find((item) => item.id === id);
     target.resurrections.unshift({
       name: form.get("name").trim(),
@@ -669,8 +770,8 @@ function renderDetail(id) {
       note: form.get("note").trim(),
       createdAt: new Date().toISOString(),
     });
-    saveIdeas(ideas);
-    renderDetail(id);
+    await saveIdea(target);
+    await renderDetail(id);
   });
 
   renderResurrections(idea);
