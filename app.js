@@ -311,9 +311,10 @@ const storageKey = "dead-projects-club:v2";
 const waitlistKey = "dead-projects-club:waitlist:v1";
 const supabaseConfig = window.DEAD_PROJECTS_SUPABASE || {};
 const supabasePublicKey = supabaseConfig.publishableKey || supabaseConfig.anonKey;
+const supabaseUrl = supabaseConfig.url?.replace(/\/$/, "");
 const supabaseClient =
-  supabaseConfig.url && supabasePublicKey && window.supabase
-    ? window.supabase.createClient(supabaseConfig.url, supabasePublicKey)
+  supabaseUrl && supabasePublicKey && window.supabase
+    ? window.supabase.createClient(supabaseUrl, supabasePublicKey)
     : null;
 const ideasTable = supabaseConfig.ideasTable || "dead_projects";
 const waitlistTable = supabaseConfig.waitlistTable || "waitlist";
@@ -426,12 +427,24 @@ async function saveWaitlistEntry(contact) {
     return;
   }
 
-  const { error } = await supabaseClient.from(waitlistTable).insert({
-    contact,
-    created_at: entry.createdAt,
+  const response = await fetch(`${supabaseUrl}/rest/v1/${waitlistTable}`, {
+    method: "POST",
+    headers: {
+      apikey: supabasePublicKey,
+      Authorization: `Bearer ${supabasePublicKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({
+      contact,
+      created_at: entry.createdAt,
+    }),
   });
 
-  if (error) throw error;
+  if (response.ok) return;
+
+  const errorText = await response.text();
+  throw new Error(errorText || `Waitlist request failed with ${response.status}`);
 }
 
 function setWaitlistMessage(message, type = "success") {
