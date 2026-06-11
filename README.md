@@ -1,4 +1,4 @@
-# Dead Projects Club
+# Dead Projects Hub
 
 A tiny MVP for burying abandoned ideas, leaving flowers, and recording resurrection attempts.
 
