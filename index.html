@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dead Projects Club</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#/">Dead Projects Club</a>
+      <nav class="nav">
+        <a href="#/">Graveyard</a>
+        <a href="#/bury">Bury an idea</a>
+        <a href="#/waitlist">Waitlist</a>
+      </nav>
+    </header>
+
+    <main id="app"></main>
+
+    <template id="home-template">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Where abandoned ideas go to be remembered</p>
+          <h1>Bury dead projects. Leave flowers. Resurrect the ones worth saving.</h1>
+          <p class="lede">
+            A tiny public graveyard for side projects, false starts, and ideas that
+            deserved a better ending.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#/bury">Bury an idea</a>
+            <button class="ghost-button" data-scroll-to="graveyard">Browse the graves</button>
+          </div>
+        </div>
+        <aside class="featured-tombstone" aria-label="Featured tombstone">
+          <span class="stone-label">Here lies</span>
+          <h2 id="featured-title"></h2>
+          <p id="featured-epitaph"></p>
+          <div class="stone-meta">
+            <span id="featured-reason"></span>
+            <span id="featured-flowers"></span>
+          </div>
+        </aside>
+      </section>
+
+      <section class="stats" aria-label="Graveyard stats">
+        <div>
+          <strong id="stat-ideas">0</strong>
+          <span>buried ideas</span>
+        </div>
+        <div>
+          <strong id="stat-flowers">0</strong>
+          <span>flowers left</span>
+        </div>
+        <div>
+          <strong id="stat-resurrections">0</strong>
+          <span>resurrection signals</span>
+        </div>
+      </section>
+
+      <section class="section-heading" id="graveyard">
+        <div>
+          <p class="eyebrow">Latest burials</p>
+          <h2>The graveyard</h2>
+        </div>
+        <div class="filters" role="group" aria-label="Sort ideas">
+          <button class="filter-button active" data-sort="latest">Latest</button>
+          <button class="filter-button" data-sort="flowers">Most flowered</button>
+          <button class="filter-button" data-sort="resurrections">Most resurrectable</button>
+        </div>
+      </section>
+      <section class="idea-grid" id="idea-grid" aria-live="polite"></section>
+
+      <section class="waitlist-band" id="waitlist">
+        <div>
+          <p class="eyebrow">Launching from the ashes</p>
+          <h2>Get the first public graveyard link.</h2>
+          <p>
+            Leave an email or X handle if you want to bury a real dead project
+            when this becomes a hosted product.
+          </p>
+        </div>
+        <form id="waitlist-form" class="waitlist-form">
+          <input name="contact" required placeholder="email@example.com or @handle" />
+          <button class="primary-button" type="submit">Join waitlist</button>
+          <span id="waitlist-message" aria-live="polite"></span>
+        </form>
+      </section>
+    </template>
+
+    <template id="bury-template">
+      <section class="form-shell">
+        <div class="form-intro">
+          <p class="eyebrow">A small funeral for an unfinished thing</p>
+          <h1>Bury an abandoned idea</h1>
+          <p>
+            Give it a name, tell the truth about why it died, and decide whether
+            someone else may bring it back.
+          </p>
+        </div>
+        <form id="bury-form" class="burial-form">
+          <label>
+            Project name
+            <input name="title" maxlength="80" required placeholder="A dating app for indie hackers" />
+          </label>
+          <label>
+            What was it supposed to become?
+            <textarea name="description" rows="4" required placeholder="A place where solo founders could meet cofounders without pretending to be normal."></textarea>
+          </label>
+          <label>
+            Epitaph
+            <input name="epitaph" maxlength="140" required placeholder="It solved loneliness for exactly zero users." />
+          </label>
+          <div class="form-row">
+            <label>
+              Cause of death
+              <select name="deathReason" required></select>
+            </label>
+            <label>
+              Stage before death
+              <select name="stage" required>
+                <option>Just a note</option>
+                <option>Landing page</option>
+                <option>Prototype</option>
+                <option>Beta</option>
+                <option>Launched</option>
+                <option>Had paying users</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            Founder&apos;s final words
+            <textarea name="lastWords" rows="3" required placeholder="I still think this could work, but not in my hands."></textarea>
+          </label>
+          <label>
+            Screenshot or project URL
+            <input name="projectUrl" type="url" placeholder="https://example.com" />
+          </label>
+          <label class="checkbox-line">
+            <input name="allowResurrection" type="checkbox" checked />
+            Let others resurrect this idea
+          </label>
+          <button class="primary-button" type="submit">Create tombstone</button>
+        </form>
+      </section>
+    </template>
+
+    <template id="detail-template">
+      <section class="detail-shell" id="detail-shell"></section>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
