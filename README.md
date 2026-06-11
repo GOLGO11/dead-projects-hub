@@ -4,12 +4,20 @@ A tiny MVP for burying abandoned ideas, leaving flowers, and recording resurrect
 
 ## Run
 
-Open `index.html` in a browser. The app uses Supabase when `supabase-config.js`
-is configured, and falls back to `localStorage` for local preview.
+Open `index.html` in a browser. The app uses Supabase when
+`supabase-config.local.js` is configured, and falls back to `localStorage` for
+local preview.
 
 ## Supabase setup
 
-Fill in `supabase-config.js`, then add this schema in Supabase:
+Copy `supabase-config.example.js` to `supabase-config.local.js`, fill in the
+values, then add this schema in Supabase. The local config file is ignored by
+Git so the key does not show up on GitHub.
+
+For static hosting, generate `supabase-config.local.js` during deployment from
+your platform's environment variables. A publishable key is safe to expose to
+the browser, but it cannot be fully hidden in a purely client-side app. Use a
+backend/API proxy if the key must never be visible to visitors.
 
 ```js
 window.DEAD_PROJECTS_SUPABASE = {

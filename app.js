@@ -434,6 +434,14 @@ async function saveWaitlistEntry(contact) {
   if (error) throw error;
 }
 
+function setWaitlistMessage(message, type = "success") {
+  const messageEl = document.getElementById("waitlist-message");
+  if (!messageEl) return;
+
+  messageEl.textContent = message;
+  messageEl.dataset.type = type;
+}
+
 function slugify(value) {
   return value
     .toLowerCase()
@@ -583,11 +591,25 @@ async function renderHome() {
 
   document.getElementById("waitlist-form").addEventListener("submit", async (event) => {
     event.preventDefault();
+    const submitButton = event.currentTarget.querySelector("button[type='submit']");
     const form = new FormData(event.currentTarget);
     const contact = form.get("contact").trim();
-    await saveWaitlistEntry(contact);
-    event.currentTarget.reset();
-    document.getElementById("waitlist-message").textContent = "Saved. See you at launch.";
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Joining...";
+    setWaitlistMessage("Saving your spot...", "pending");
+
+    try {
+      await saveWaitlistEntry(contact);
+      event.currentTarget.reset();
+      setWaitlistMessage("Saved. See you at launch.", "success");
+    } catch (error) {
+      console.error("Waitlist save failed.", error);
+      setWaitlistMessage("Could not save that yet. Please try again.", "error");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Join waitlist";
+    }
   });
 
   await renderIdeaGrid();
