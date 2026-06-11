@@ -604,8 +604,9 @@ async function renderHome() {
 
   document.getElementById("waitlist-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-    const submitButton = event.currentTarget.querySelector("button[type='submit']");
-    const form = new FormData(event.currentTarget);
+    const formEl = event.currentTarget;
+    const submitButton = formEl.querySelector("button[type='submit']");
+    const form = new FormData(formEl);
     const contact = form.get("contact").trim();
 
     submitButton.disabled = true;
@@ -614,7 +615,7 @@ async function renderHome() {
 
     try {
       await saveWaitlistEntry(contact);
-      event.currentTarget.reset();
+      formEl.reset();
       setWaitlistMessage("Saved. See you at launch.", "success");
     } catch (error) {
       console.error("Waitlist save failed.", error);
